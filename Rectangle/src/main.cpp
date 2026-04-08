@@ -97,14 +97,15 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    /*
+
     float vertices[] = {
         0.5f, 0.5f, 0.0f,   // 右上角
         0.5f, -0.5f, 0.0f,  // 右下角
         -0.5f, -0.5f, 0.0f, // 左下角
         -0.5f, 0.5f, 0.0f   // 左上角
-    };*/
+    };
 
+    /*
     float vertices[] = {
         // 第一个三角形
         0.5f, 0.5f, 0.0f,   // 右上角
@@ -116,7 +117,7 @@ int main()
         -0.5f, 0.5f, 0.0f   // 左上角
     };
     
-    
+    */
     unsigned int indices[] = {
     
         0, 1, 3, // 第一个三角形
@@ -157,9 +158,8 @@ int main()
         
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO); 
-        glDrawArrays(GL_POINTS, 0, 6);
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // glBindVertexArray(0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -12,28 +12,11 @@ if (UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
 endif()
 
-if (WIN32)
-     set(GLFW_DIR ${CMAKE_SOURCE_DIR}/thirdparty/glfw)
-     set(GLFW_LIB "${GLFW_DIR}/lib/libglfw3.a")
-     
-     message(STATUS "GLFW directory: ${GLFW_DIR}")
-     message(STATUS "Looking for GLFW static library at: ${GLFW_LIB}")
-     
-     # 检查文件是否存在
-     if(NOT EXISTS ${GLFW_LIB})
-         message(FATAL_ERROR "GLFW static library not found at ${GLFW_LIB}")
-     endif()
-     
-     # 链接 GLFW 静态库
-     add_library(glfw STATIC IMPORTED)
-     set_target_properties(glfw PROPERTIES
-         IMPORTED_LOCATION "${GLFW_LIB}"
-         INTERFACE_INCLUDE_DIRECTORIES "${GLFW_DIR}/include"
-     )
-elseif (UNIX)
-     find_package(glfw3 REQUIRED)
-endif()
-
+# 添加 GLFW 子项目（使用本地源码）
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/glfw)
 
 add_library(glad STATIC
     ${CMAKE_SOURCE_DIR}/thirdparty/glad/src/glad.c
