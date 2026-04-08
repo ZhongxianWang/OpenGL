@@ -8,7 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # 生成 compile_commands.json 用于 IDE 智能提示
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
 set(CMAKE_BUILD_TYPE Debug)
 if (WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "/Od /Zi")
