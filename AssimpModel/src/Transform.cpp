@@ -1,5 +1,6 @@
 #include "Transform.h"
 #include <GLFW/glfw3.h>
+#include <cmath>
 
 Transform::Transform()
     : m_viewCenter(0.0f, 0.0f, 0.0f)

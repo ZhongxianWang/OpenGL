@@ -10,37 +10,21 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+if (WIN32)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Zi")
+    set(CMAKE_C_FLAGS_DEBUG "/Od /Zi")
+else()
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+    set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+endif()
 
 project(assimp_model VERSION 0.1 LANGUAGES C CXX)
 
-if (UNIX AND NOT APPLE)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
-endif()
-
-if (WIN32)
-     set(GLFW_DIR ${CMAKE_SOURCE_DIR}/thirdparty/glfw)
-     set(GLFW_LIB "${GLFW_DIR}/lib/libglfw3.a")
-     
-     message(STATUS "GLFW directory: ${GLFW_DIR}")
-     message(STATUS "Looking for GLFW static library at: ${GLFW_LIB}")
-     
-     # 检查文件是否存在
-     if(NOT EXISTS ${GLFW_LIB})
-         message(FATAL_ERROR "GLFW static library not found at ${GLFW_LIB}")
-     endif()
-     
-     # 链接 GLFW 静态库
-     add_library(glfw STATIC IMPORTED)
-     set_target_properties(glfw PROPERTIES
-         IMPORTED_LOCATION "${GLFW_LIB}"
-         INTERFACE_INCLUDE_DIRECTORIES "${GLFW_DIR}/include"
-     )
-elseif (UNIX)
-     find_package(glfw3 REQUIRED)
-endif()
+# 添加 GLFW 子项目（使用本地源码）
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/glfw)
 
 
 add_library(glad STATIC
@@ -52,6 +36,9 @@ target_include_directories(glad PUBLIC
 )
 
 add_subdirectory(thirdparty/cmrc)
+
+# 添加 Assimp 子项目
+add_subdirectory(thirdparty/assimp)
 
 cmrc_add_resource_library(shaders
     NAMESPACE shaders
@@ -74,6 +61,11 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/Transform.cpp
 )
 
+# 设置主项目的编译选项（解决中文输出乱码问题）
+if (WIN32)
+    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+endif()
+
 # 在编译时拷贝模型和纹理资源到构建目录
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -94,4 +86,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/thirdparty
+    ${CMAKE_SOURCE_DIR}/thirdparty/assimp/include
 )

@@ -8,7 +8,7 @@
 #include <assimp/postprocess.h>
 #include <glad/glad.h>
 #include "stb_image/stb_image.h"
-
+namespace fs = std::filesystem;
 Model::Model(const std::string& path)
     : m_modelPath(path)
 {
@@ -126,29 +126,10 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
         aiString str;
         mat->GetTexture(type, i, &str);
 
-        std::string directory = m_modelPath.substr(0, m_modelPath.find_last_of('/'));
-        std::string texturePath = str.C_Str();
-        // 将Windows风格的反斜杠替换为正斜杠，确保在Linux系统上路径正确
-        for (char& c : texturePath) {
-            if (c == '\\') c = '/';
-        }
-        // 移除路径中连续的多个斜杠，只保留一个
-        std::string normalizedPath;
-        bool lastWasSlash = false;
-        for (char c : texturePath) {
-            if (c == '/') {
-                if (!lastWasSlash) {
-                    normalizedPath += c;
-                    lastWasSlash = true;
-                }
-            } else {
-                normalizedPath += c;
-                lastWasSlash = false;
-            }
-        }
-        std::string filename = directory + '/' + normalizedPath;
+        fs::path directory =  fs::path(m_modelPath).parent_path();
+        directory.append(str.C_Str());
+        std::string filename = directory.string();
 
-        // Linux文件系统区分大小写，如果文件不存在，尝试小写路径
         if (!std::filesystem::exists(filename)) {
             std::string lowerPath = filename;
             std::transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(),

@@ -89,8 +89,9 @@ int main()
     
     // 加载 obj 模型
     std::vector<Model> models;
-    std::string modelsDir = "resource/models/tree";
-    for (const auto& entry : fs::directory_iterator(modelsDir)) {
+    std::string modelsDir = "resource/models/backpack";
+    fs::path modelPath = modelsDir;
+    for (const auto& entry : fs::directory_iterator(modelPath.make_preferred())) {
         if (entry.path().extension() == ".obj"
             || entry.path().extension() == ".pmx"
             || entry.path().extension() == ".FBX") {
