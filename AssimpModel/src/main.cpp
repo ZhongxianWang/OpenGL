@@ -69,7 +69,7 @@ int main()
     glEnable(GL_MULTISAMPLE);
 
     // 创建相机
-    Camera camera(glm::vec3(0.0f, 5.0f, 10.0f), glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    Camera camera(glm::vec3(0.0f, 5.0f, 10.0f), glm::vec3(-10.0f, 2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     Transform transform;
     glfwSetWindowUserPointer(window, &transform);
 
@@ -89,12 +89,13 @@ int main()
     
     // 加载 obj 模型
     std::vector<Model> models;
-    std::string modelsDir = "resource/models/backpack";
+    std::string modelsDir = "resource/models/Unarmed Walk Forward";
     fs::path modelPath = modelsDir;
     for (const auto& entry : fs::directory_iterator(modelPath.make_preferred())) {
         if (entry.path().extension() == ".obj"
             || entry.path().extension() == ".pmx"
-            || entry.path().extension() == ".FBX") {
+            || entry.path().extension() == ".FBX"
+            || entry.path().extension() == ".dae") {
             std::cout << "Loading model: " << entry.path().string() << std::endl;
             try {
                 models.emplace_back(entry.path().string());

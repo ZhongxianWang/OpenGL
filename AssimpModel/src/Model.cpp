@@ -140,7 +140,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
         }
 
         // 使用纹理缓存，避免重复加载
-        //std::cout << "Loading texture type=" << typeName << ", path=" << filename << std::endl;
+        std::cout << "Loading texture type=" << typeName << ", path=" << filename << std::endl;
         unsigned int textureID = loadTextureFromFile(filename);
         if (textureID != 0) {
             Texture texture;
