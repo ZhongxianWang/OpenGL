@@ -58,6 +58,13 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/Camera.cpp
     ${CMAKE_SOURCE_DIR}/src/Transform.h
     ${CMAKE_SOURCE_DIR}/src/Transform.cpp
+    ${CMAKE_SOURCE_DIR}/src/AssimpGLMHelpers.h
+    ${CMAKE_SOURCE_DIR}/src/Bone.h
+    ${CMAKE_SOURCE_DIR}/src/Bone.cpp
+    #${CMAKE_SOURCE_DIR}/src/Animation.h
+    #${CMAKE_SOURCE_DIR}/src/Animation.cpp
+    ${CMAKE_SOURCE_DIR}/src/Animator.h
+    ${CMAKE_SOURCE_DIR}/src/Animator.cpp
 )
 
 # 设置主项目的编译选项（解决中文输出乱码问题）

@@ -1,6 +1,8 @@
 #include "Mesh.h"
-#include <glad/glad.h> 
+#include <glad/glad.h>
 #include <iostream>
+
+// Mesh implementation
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material)
 {
@@ -54,6 +56,18 @@ void Mesh::draw(Shader& shader)
 
 void Mesh::setupMesh()
 {
+    std::cout << "Setting up mesh: " << m_vertices.size() << " vertices, "
+              << m_indices.size() << " indices" << std::endl;
+
+    // 检查骨骼数据
+    int bonesWithWeights = 0;
+    for (const auto& vertex : m_vertices) {
+        if (vertex.weights[0] > 0.0f) {
+            bonesWithWeights++;
+        }
+    }
+    std::cout << "Vertices with bone weights: " << bonesWithWeights << std::endl;
+
     // 创建 VBO, EBO, VAO
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
@@ -61,18 +75,26 @@ void Mesh::setupMesh()
 
     glBindVertexArray(m_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(Vertex), &m_vertices[0], GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(Vertex), &m_vertices[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), &m_indices[0], GL_STATIC_DRAW);
 
     // 设置顶点属性指针
-    glEnableVertexAttribArray(0);	
+    glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glEnableVertexAttribArray(1);	
+    glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
-    glEnableVertexAttribArray(2);	
+    glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-    
+
+    // 设置骨骼ID属性
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneIDs));
+
+    // 设置骨骼权重属性
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
+
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

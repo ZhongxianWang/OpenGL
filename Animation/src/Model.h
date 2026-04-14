@@ -5,6 +5,20 @@
 #include <string>
 #include <map>
 #include "Mesh.h"
+#include "glm/fwd.hpp"
+
+struct BoneOffset {
+    int id;
+    glm::mat4 offsetMatrix;
+};
+
+struct AssimpNodeData
+{
+    glm::mat4 transformation;
+    std::string name;
+    int childrenCount;
+    std::vector<AssimpNodeData*> children;
+};
 
 class aiNode;
 class aiScene;
@@ -15,10 +29,13 @@ public:
 	Model(const std::string& path);
 	~Model();
     void draw(Shader& shader);
+    AssimpNodeData* GetRootNode() { return m_root; }
+    std::map<std::string, BoneOffset> GetBoneOffsetMap() { return m_boneOffsetMap; }
+    int GetBoneCount() { return m_boneIndex; }
 
 private:
     void loadModel(const std::string& path);
-    void processNode(aiNode* node, const aiScene* scene);
+    AssimpNodeData* processNode(aiNode* node, const aiScene* scene);
     Mesh processMesh(aiMesh* mesh, const aiScene* scene);
     std::vector<Texture> loadMaterialTextures(aiMaterial* material, aiTextureType type, std::string typeName);
     Material loadMaterial(aiMaterial* material);
@@ -28,4 +45,8 @@ private:
     std::vector<Mesh> m_meshes;
     std::string m_modelPath;
     std::map<std::string, unsigned int> m_textureCache;
+    std::map<std::string, BoneOffset> m_boneOffsetMap;
+    AssimpNodeData* m_root = nullptr;
+    int m_boneIndex = 0;
+    
 };

@@ -8,6 +8,8 @@
 #include <assimp/postprocess.h>
 #include <glad/glad.h>
 #include "stb_image/stb_image.h"
+#include "AssimpGLMHelpers.h"
+
 namespace fs = std::filesystem;
 Model::Model(const std::string& path)
     : m_modelPath(path)
@@ -28,29 +30,22 @@ void Model::draw(Shader& shader)
 
 void Model::loadModel(const std::string& path)
 {
-    //std::cout << "Loading model from: " << path << std::endl;
+    std::cout << "Loading model from: " << path << std::endl;
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate |
     aiProcess_GenSmoothNormals |
     aiProcess_LimitBoneWeights |  // 关键！处理骨骼
     aiProcess_FlipUVs);
 
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-    {
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
 
-    if (scene->HasAnimations()) {
-        std::cout << "Model has animations." << std::endl;
-    } else {
-        std::cout << "Model has no animations." << std::endl;
-    }
-
-    processNode(scene->mRootNode, scene);
+    m_root = processNode(scene->mRootNode, scene);
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene)
+AssimpNodeData* Model::processNode(aiNode* node, const aiScene* scene)
 {
     // 处理当前节点的所有网格
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -58,10 +53,16 @@ void Model::processNode(aiNode* node, const aiScene* scene)
         m_meshes.push_back(processMesh(mesh, scene));
     }
 
+    AssimpNodeData* nodeData = new AssimpNodeData;
+    nodeData->name = node->mName.data;
+    nodeData->transformation = AssimpGLMHelpers::ConvertMatrixToGLMFormat(node->mTransformation);
+    nodeData->childrenCount = node->mNumChildren;
+
     // 递归处理所有子节点
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene);
+        nodeData->children.emplace_back(processNode(node->mChildren[i], scene));
     }
+    return nodeData;
 }
 
 Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
@@ -79,9 +80,13 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
         }
 
         unsigned int numUVChannels = mesh->GetNumUVChannels();
-        //std::cout << "当前网格的UV通道（纹理坐标数组）数量：" << numUVChannels << std::endl;
         if (mesh->mTextureCoords[0]) {
             vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+        }
+
+        for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
+            vertex.boneIDs[i] = -1;
+            vertex.weights[i] = 0.0f;
         }
         vertices.push_back(vertex);
     }
@@ -93,13 +98,40 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
         }
     }
 
-    for (int b = 0; b < mesh->mNumBones; b++) {
-        aiBone* bone = mesh->mBones[b];
-        // 骨骼名字
-        std::string name = bone->mName.C_Str();
-        std::cout << "Bone name: " << name << std::endl;
-    }
+    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex) {
+        int boneID = -1;
+        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+        
+        if (m_boneOffsetMap.find(boneName) == m_boneOffsetMap.end()) {
+            BoneOffset boneOffset;
+            boneOffset.id = m_boneIndex;
+            boneOffset.offsetMatrix = AssimpGLMHelpers::ConvertMatrixToGLMFormat(
+                mesh->mBones[boneIndex]->mOffsetMatrix);
+            m_boneOffsetMap[boneName] = boneOffset;
+            boneID = m_boneIndex;
+            m_boneIndex++;
+        } else {
+            boneID = m_boneOffsetMap[boneName].id;
+        }
 
+        auto weights = mesh->mBones[boneIndex]->mWeights;
+        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+        for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
+            int vertexId = weights[weightIndex].mVertexId;
+            float weight = weights[weightIndex].mWeight;
+            assert(vertexId <= vertices.size());
+
+            // 找到第一个空位，设置权重和骨骼ID
+            for (int i = 0; i < MAX_BONE_INFLUENCE; ++i) {
+                if (vertices[vertexId].boneIDs[i] < 0) {
+                    vertices[vertexId].weights[i] = weight;
+                    vertices[vertexId].boneIDs[i] = boneID;
+                    break;
+                }
+            }
+        }
+    }
+    
     // 处理材质和纹理
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     Material mat;

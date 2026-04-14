@@ -15,6 +15,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Transform.h"
+#include "Animator.h"
 
 namespace fs = std::filesystem;
 
@@ -57,7 +58,6 @@ int main()
     }
     std::cout << "GLFW window created successfully" << std::endl;
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -68,8 +68,18 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
 
+    // 先获取实际的窗口尺寸
+    glfwGetFramebufferSize(window, &window_width, &window_height);
+    // 确保 window_width 和 window_height 不为 0
+    window_width = (window_width > 0) ? window_width : SCR_WIDTH;
+    window_height = (window_height > 0) ? window_height : SCR_HEIGHT;
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    std::cout << "Window size initialized: " << window_width << "x" << window_height << std::endl;
+
     // 创建相机
-    Camera camera(glm::vec3(-15.0f, 100.0f, 350.0f), glm::vec3(-15.0f, 100.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    Camera camera(glm::vec3(0.0f, 60.0f, 300.0f), glm::vec3(0.0f, 60.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     Transform transform;
     glfwSetWindowUserPointer(window, &transform);
 
@@ -88,26 +98,19 @@ int main()
     );
     
     // 加载 obj 模型
-    std::vector<Model> models;
-    std::string modelsDir = "resource/models/vampire";
-    fs::path modelPath = modelsDir;
-    for (const auto& entry : fs::directory_iterator(modelPath.make_preferred())) {
-        if (entry.path().extension() == ".obj"
-            || entry.path().extension() == ".pmx"
-            || entry.path().extension() == ".FBX"
-            || entry.path().extension() == ".dae") {
-            std::cout << "Loading model: " << entry.path().string() << std::endl;
-            try {
-                models.emplace_back(entry.path().string());
-            } catch (const std::exception& e) {
-                std::cerr << "Error loading model " << entry.path().string() << ": " << e.what() << std::endl;
-            }
-        }
-    }
+    Model ourModel("resource/models/vampire/dancing_vampire.dae");
+    Animator animator("resource/models/vampire/dancing_vampire.dae", &ourModel);
 
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
     while (!glfwWindowShouldClose(window))
     {
         processInput(window, &camera);
+
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        animator.UpdateAnimation(deltaTime);
 
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -117,7 +120,12 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         model = transform.getTransformMatrix() * model;
         glm::mat4 view = camera.getViewMat();
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 500.0f);
+
+        // 防止 window_height 或 window_width 为 0 导致 aspect ratio 错误
+        float safeWidth = (window_width > 0) ? (float)window_width : (float)SCR_WIDTH;
+        float safeHeight = (window_height > 0) ? (float)window_height : (float)SCR_HEIGHT;
+        float aspectRatio = safeWidth / safeHeight;
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 2000.0f);
 
         transform.setViewCenter(camera.getViewCenter());
         transform.setViewMatrix(view);
@@ -128,18 +136,15 @@ int main()
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
+        auto transforms = animator.GetFinalBoneMatrices();
+        for (int i = 0; i < transforms.size(); ++i)
+            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+
         // 设置光照参数
         glm::vec3 lightPos(2.0f, 2.0f, 20.0f);
         shader.setVec3("lightPos", lightPos);
         shader.setVec3("viewPos", camera.getPosition());
-
-        float xOffset = 0.0f;
-        float zOffset = 0.0f;
-        int modelsPerRow = 5;
-        float spacing = 3.0f;
-        for (size_t i = 0; i < models.size(); ++i) {
-            models[i].draw(shader);
-        }
+        ourModel.draw(shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -220,8 +225,6 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     window_width = width;
     window_height = height;
