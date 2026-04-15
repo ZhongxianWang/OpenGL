@@ -79,7 +79,8 @@ int main()
     std::cout << "Window size initialized: " << window_width << "x" << window_height << std::endl;
 
     // 创建相机
-    Camera camera(glm::vec3(0.0f, 60.0f, 300.0f), glm::vec3(0.0f, 60.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //Camera camera(glm::vec3(0.0f, 0.8f, 5.0f), glm::vec3(0.0f, 0.8f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    Camera camera(glm::vec3(0.0f, 100.0f, 350.0f), glm::vec3(0.0f, 100.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     Transform transform;
     glfwSetWindowUserPointer(window, &transform);
 
@@ -100,7 +101,6 @@ int main()
     // 加载 obj 模型
     Model ourModel("resource/models/vampire/dancing_vampire.dae");
     Animator animator("resource/models/vampire/dancing_vampire.dae", &ourModel);
-
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
     while (!glfwWindowShouldClose(window))
@@ -137,8 +137,9 @@ int main()
         shader.setMat4("projection", projection);
 
         auto transforms = animator.GetFinalBoneMatrices();
-        for (int i = 0; i < transforms.size(); ++i)
-            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+        for (int i = 0; i < transforms.size(); ++i) {
+           shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]); 
+        }
 
         // 设置光照参数
         glm::vec3 lightPos(2.0f, 2.0f, 20.0f);

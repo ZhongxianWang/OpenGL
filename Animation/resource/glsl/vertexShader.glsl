@@ -24,12 +24,7 @@ out vec3 FragPos;
 void main()
 {
    vec4 finalPosition = vec4(0.0);
-   for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
-   {
-      if (boneIds[i] == -1 && i == 0) {
-         finalPosition = vec4(aPos, 1.0);
-         break;
-      }
+   for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
       if (boneIds[i] == -1) {
          break;
       }

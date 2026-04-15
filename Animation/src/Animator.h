@@ -17,12 +17,9 @@ private:
     
 private:
     std::vector<glm::mat4> m_finalBoneMatrices;
-    float m_currentTime;
-    float m_deltaTime;
-
-    float m_duration;
+    float m_currentTick;
+    float m_totalTicks;
     int m_ticksPerSecond;
     std::map<std::string, Bone> m_bones;
-
     Model* m_model;
 };

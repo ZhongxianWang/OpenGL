@@ -30,7 +30,6 @@ public:
     Bone(const std::string& name, const aiNodeAnim* channel);
     // 根据时间戳更新变换矩阵
     void Update(float animationTime);
-
     glm::mat4 GetLocalTransform() { return m_localTransform; }
     std::string GetBoneName() const { return m_name; }
 

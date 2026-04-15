@@ -7,6 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <glad/glad.h>
+#include "glm/fwd.hpp"
 #include "stb_image/stb_image.h"
 #include "AssimpGLMHelpers.h"
 
@@ -57,6 +58,10 @@ AssimpNodeData* Model::processNode(aiNode* node, const aiScene* scene)
     nodeData->name = node->mName.data;
     nodeData->transformation = AssimpGLMHelpers::ConvertMatrixToGLMFormat(node->mTransformation);
     nodeData->childrenCount = node->mNumChildren;
+
+    if (node == scene->mRootNode) {
+        nodeData->transformation = glm::mat4(1.0f);
+    }
 
     // 递归处理所有子节点
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
@@ -171,20 +176,16 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
             }
         }
 
-        // 使用纹理缓存，避免重复加载
-        //std::cout << "Loading texture type=" << typeName << ", path=" << filename << std::endl;
         unsigned int textureID = loadTextureFromFile(filename);
         if (textureID != 0) {
             Texture texture;
             texture.id = textureID;
             texture.type = typeName;
             textures.push_back(texture);
-            //std::cout << "  Success! Texture ID: " << textureID << std::endl;
         } else {
             std::cout << "  Failed to load texture!" << std::endl;
         }
     }
-    //std::cout << "typeName: " << typeName << ", textures.size()=" << textures.size() << std::endl;
     return textures;
 }
 

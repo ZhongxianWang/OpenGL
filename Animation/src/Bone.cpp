@@ -11,14 +11,13 @@ Bone::Bone(const std::string& name, const aiNodeAnim* channel)
     , m_localTransform(1.0f)
 {
     m_positionNum = channel->mNumPositionKeys;
-
     for (int positionIndex = 0; positionIndex < m_positionNum; ++positionIndex) {
         aiVector3D aiPosition = channel->mPositionKeys[positionIndex].mValue;
         float timeStamp = channel->mPositionKeys[positionIndex].mTime;
         KeyPosition data;
         data.position = AssimpGLMHelpers::GetGLMVec(aiPosition);
         data.timeStamp = timeStamp;
-        m_positions.push_back(data);
+        m_positions.emplace_back(data);
     }
 
     m_rotationNum = channel->mNumRotationKeys;
@@ -28,7 +27,7 @@ Bone::Bone(const std::string& name, const aiNodeAnim* channel)
         KeyRotation data;
         data.orientation = AssimpGLMHelpers::GetGLMQuat(aiOrientation);
         data.timeStamp = timeStamp;
-        m_rotations.push_back(data);
+        m_rotations.emplace_back(data);
     }
 
     m_scaleNum = channel->mNumScalingKeys;
@@ -38,7 +37,7 @@ Bone::Bone(const std::string& name, const aiNodeAnim* channel)
         KeyScale data;
         data.scale = AssimpGLMHelpers::GetGLMVec(scale);
         data.timeStamp = timeStamp;
-        m_scales.push_back(data);
+        m_scales.emplace_back(data);
     }
 }
 
@@ -51,12 +50,15 @@ void Bone::Update(float animationTime) {
 
 glm::mat4 Bone::InterpolatePosition(float animationTime)
 {
-    if (1 == m_positionNum) {
+    if (m_positionNum == 1) {
         return glm::translate(glm::mat4(1.0f), m_positions[0].position);
     }
 
     // 根据两个关键帧的平移量，计算插值
     int p0Index = GetPositionIndex(animationTime);
+    if (p0Index == -1) {
+        return glm::mat4(1.0f);
+    }
     int p1Index = p0Index + 1;
     float scaleFactor = GetScaleFactor(m_positions[p0Index].timeStamp,m_positions[p1Index].timeStamp, animationTime);
     glm::vec3 finalPosition = glm::mix(m_positions[p0Index].position,m_positions[p1Index].position, scaleFactor);
@@ -65,11 +67,14 @@ glm::mat4 Bone::InterpolatePosition(float animationTime)
 
 glm::mat4 Bone::InterpolateRotation(float animationTime)
 {
-    if (1 == m_rotationNum) {
+    if (m_rotationNum == 1) {
         glm::quat rotation = glm::normalize(m_rotations[0].orientation);
         return glm::toMat4(rotation);
     }
     int p0Index = GetRotationIndex(animationTime);
+    if (p0Index == -1) {
+        return glm::mat4(1.0f);
+    }
     int p1Index = p0Index + 1;
     float scaleFactor = GetScaleFactor(m_rotations[p0Index].timeStamp,m_rotations[p1Index].timeStamp, animationTime);
     glm::quat finalRotation = glm::slerp(m_rotations[p0Index].orientation,m_rotations[p1Index].orientation, scaleFactor);
@@ -79,11 +84,14 @@ glm::mat4 Bone::InterpolateRotation(float animationTime)
 
 glm::mat4 Bone::InterpolateScale(float animationTime)
 {
-    if (1 == m_scaleNum) {
+    if (m_scaleNum == 1) {
         return glm::scale(glm::mat4(1.0f), m_scales[0].scale);
     }
 
     int p0Index = GetScaleIndex(animationTime);
+    if (p0Index == -1) {
+        return glm::mat4(1.0f);
+    }
     int p1Index = p0Index + 1;
     float scaleFactor = GetScaleFactor(m_scales[p0Index].timeStamp,m_scales[p1Index].timeStamp, animationTime);
     glm::vec3 finalScale = glm::mix(m_scales[p0Index].scale, m_scales[p1Index].scale, scaleFactor);
@@ -107,8 +115,7 @@ int Bone::GetPositionIndex(float animationTime)
             return index;
         }
     }
-    // 如果动画时间等于或超过最后一个关键帧，返回倒数第二个关键帧
-    return m_positionNum - 2;
+    return -1;
 }
 
 int Bone::GetRotationIndex(float animationTime)
@@ -118,7 +125,7 @@ int Bone::GetRotationIndex(float animationTime)
             return index;
         }
     }
-    return m_rotationNum - 2;
+    return -1;
 }
 
 int Bone::GetScaleIndex(float animationTime)
@@ -128,5 +135,5 @@ int Bone::GetScaleIndex(float animationTime)
             return index;
         }
     }
-    return m_scaleNum - 2;
+    return -1;
 }

@@ -7,7 +7,8 @@
 #include "Mesh.h"
 #include "glm/fwd.hpp"
 
-struct BoneOffset {
+struct BoneOffset 
+{
     int id;
     glm::mat4 offsetMatrix;
 };
