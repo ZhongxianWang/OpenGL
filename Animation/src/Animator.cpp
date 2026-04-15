@@ -18,7 +18,6 @@ Animator::Animator(const std::string& animationPath, Model* model)
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
     if (scene->mNumAnimations > 0) {
-        return;
         auto animation = scene->mAnimations[0];
         m_totalTicks = animation->mDuration;
         m_ticksPerSecond = animation->mTicksPerSecond;
