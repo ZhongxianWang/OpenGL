@@ -17,15 +17,18 @@ Animator::Animator(const std::string& animationPath, Model* model)
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
-    auto animation = scene->mAnimations[0];
-    m_totalTicks = animation->mDuration;
-    m_ticksPerSecond = animation->mTicksPerSecond;
+    if (scene->mNumAnimations > 0) {
+        return;
+        auto animation = scene->mAnimations[0];
+        m_totalTicks = animation->mDuration;
+        m_ticksPerSecond = animation->mTicksPerSecond;
 
-    int size = animation->mNumChannels;
-    for (int i = 0; i < size; i++) {
-        auto channel = animation->mChannels[i];
-        std::string boneName = channel->mNodeName.data;
-        m_bones[boneName] = Bone(boneName, channel);
+        int size = animation->mNumChannels;
+        for (int i = 0; i < size; i++) {
+            auto channel = animation->mChannels[i];
+            std::string boneName = channel->mNodeName.data;
+            m_bones[boneName] = Bone(boneName, channel);
+        }
     }
 }
 

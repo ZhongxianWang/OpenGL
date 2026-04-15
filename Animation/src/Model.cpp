@@ -212,7 +212,7 @@ Material Model::loadMaterial(aiMaterial* material) {
 
 unsigned int Model::loadTextureFromFile(const std::string& path)
 {
-    stbi_set_flip_vertically_on_load(true);
+    //stbi_set_flip_vertically_on_load(true);
     // 检查缓存中是否已有此纹理
     auto it = m_textureCache.find(path);
     if (it != m_textureCache.end()) {
