@@ -20,7 +20,6 @@
 namespace fs = std::filesystem;
 
 CMRC_DECLARE(shaders);
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window, Camera* camera);
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
