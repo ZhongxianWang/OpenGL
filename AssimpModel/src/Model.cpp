@@ -28,7 +28,6 @@ void Model::draw(Shader& shader)
 
 void Model::loadModel(const std::string& path)
 {
-    //std::cout << "Loading model from: " << path << std::endl;
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate |
     aiProcess_GenSmoothNormals |
@@ -40,13 +39,6 @@ void Model::loadModel(const std::string& path)
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
-
-    if (scene->HasAnimations()) {
-        std::cout << "Model has animations." << std::endl;
-    } else {
-        std::cout << "Model has no animations." << std::endl;
-    }
-
     processNode(scene->mRootNode, scene);
 }
 
@@ -79,7 +71,6 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
         }
 
         unsigned int numUVChannels = mesh->GetNumUVChannels();
-        //std::cout << "当前网格的UV通道（纹理坐标数组）数量：" << numUVChannels << std::endl;
         if (mesh->mTextureCoords[0]) {
             vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         }
@@ -91,13 +82,6 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
             indices.push_back(face.mIndices[j]);
         }
-    }
-
-    for (int b = 0; b < mesh->mNumBones; b++) {
-        aiBone* bone = mesh->mBones[b];
-        // 骨骼名字
-        std::string name = bone->mName.C_Str();
-        std::cout << "Bone name: " << name << std::endl;
     }
 
     // 处理材质和纹理
@@ -140,19 +124,16 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
         }
 
         // 使用纹理缓存，避免重复加载
-        std::cout << "Loading texture type=" << typeName << ", path=" << filename << std::endl;
         unsigned int textureID = loadTextureFromFile(filename);
         if (textureID != 0) {
             Texture texture;
             texture.id = textureID;
             texture.type = typeName;
             textures.push_back(texture);
-            //std::cout << "  Success! Texture ID: " << textureID << std::endl;
         } else {
             std::cout << "  Failed to load texture!" << std::endl;
         }
     }
-    //std::cout << "typeName: " << typeName << ", textures.size()=" << textures.size() << std::endl;
     return textures;
 }
 
@@ -185,7 +166,7 @@ unsigned int Model::loadTextureFromFile(const std::string& path)
     if (it != m_textureCache.end()) {
         return it->second;
     }
-
+    std::cout << "Loading texture from file: " << path << std::endl;
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
@@ -210,8 +191,6 @@ unsigned int Model::loadTextureFromFile(const std::string& path)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
-        //std::cout << "Texture loaded: " << path << " (" << width << "x" << height << ")" << std::endl;
-
         // 添加到缓存
         m_textureCache[path] = textureID;
         return textureID;

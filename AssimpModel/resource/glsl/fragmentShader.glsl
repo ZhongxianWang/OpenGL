@@ -3,8 +3,8 @@ in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragPos;
 
-uniform sampler2D texture_diffuse1;
-uniform sampler2D texture_specular1;
+uniform sampler2D texture_diffuse[16];
+uniform sampler2D texture_speculare[16];
 
 uniform vec3 ambient;
 uniform vec3 diffuse;
@@ -17,8 +17,8 @@ out vec4 FragColor;
 
 void main()
 {
-    vec3 diffTexColor = texture(texture_diffuse1, TexCoord).rgb;
-    vec3 specTexColor = texture(texture_specular1, TexCoord).rgb;
+    vec3 diffTexColor = texture(texture_diffuse[0], TexCoord).rgb;
+    vec3 specTexColor = texture(texture_speculare[0], TexCoord).rgb;
 
     // 环境光：使用材质 ambient 系数
     vec3 ambientColor = ambient * diffTexColor;
@@ -33,7 +33,7 @@ void main()
     vec3 viewDir = normalize(viewPos - FragPos);
     //vec3 halfwayDir = normalize(lightDir + viewDir);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specularColor = specular * spec * specTexColor;
 
     // 最终颜色计算

@@ -33,11 +33,10 @@ target_include_directories(glad PUBLIC
     ${CMAKE_SOURCE_DIR}/thirdparty/glad/include
 )
 
-add_subdirectory(thirdparty/cmrc)
-
 # 添加 Assimp 子项目
 add_subdirectory(thirdparty/assimp)
 
+add_subdirectory(thirdparty/cmrc)
 cmrc_add_resource_library(shaders
     NAMESPACE shaders
     WHENCE ${CMAKE_SOURCE_DIR}
