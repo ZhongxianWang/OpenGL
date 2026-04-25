@@ -22,8 +22,6 @@ add_library(glad STATIC
     ${CMAKE_SOURCE_DIR}/thirdparty/glad/src/glad.c
 )
 
-
-
 target_include_directories(glad PUBLIC
     ${CMAKE_SOURCE_DIR}/thirdparty/glad/include
 )
@@ -41,5 +39,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # 包含目录（让代码能找到 GLAD/GLFW 头文件）
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${GLFW_DIR}/include       # 手动链接时的 GLFW 头文件路径
+    ${CMAKE_SOURCE_DIR}/thirdparty/glad/include
+    ${CMAKE_SOURCE_DIR}/thirdparty/glfw/include
 )

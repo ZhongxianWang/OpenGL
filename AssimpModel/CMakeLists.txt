@@ -9,13 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_BUILD_TYPE Debug)
-if (WIN32)
-    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Zi")
-    set(CMAKE_C_FLAGS_DEBUG "/Od /Zi")
-else()
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_C_FLAGS_DEBUG "-g -O0")
-endif()
 
 project(assimp_model VERSION 0.1 LANGUAGES C CXX)
 
@@ -60,7 +53,11 @@ add_executable(${PROJECT_NAME}
 
 # 设置主项目的编译选项（解决中文输出乱码问题）
 if (WIN32)
-    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+    if (MSVC)
+        target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+    else()
+        target_compile_options(${PROJECT_NAME} PRIVATE -finput-charset=UTF-8 -fexec-charset=UTF-8)
+    endif()
 endif()
 
 # 在编译时拷贝模型和纹理资源到构建目录
