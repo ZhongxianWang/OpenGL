@@ -33,8 +33,10 @@ add_subdirectory(thirdparty/cmrc)
 cmrc_add_resource_library(shaders
     NAMESPACE shaders
     WHENCE ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/resource/glsl/vertexShader.glsl
-    ${CMAKE_SOURCE_DIR}/resource/glsl/fragmentShader.glsl
+    ${CMAKE_SOURCE_DIR}/resource/glsl/planet.vs
+    ${CMAKE_SOURCE_DIR}/resource/glsl/planet.fs
+    ${CMAKE_SOURCE_DIR}/resource/glsl/rock.vs
+    ${CMAKE_SOURCE_DIR}/resource/glsl/rock.fs
 )
 
 add_executable(${PROJECT_NAME}
@@ -47,8 +49,6 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/Model.cpp
     ${CMAKE_SOURCE_DIR}/src/Camera.h
     ${CMAKE_SOURCE_DIR}/src/Camera.cpp
-    ${CMAKE_SOURCE_DIR}/src/Transform.h
-    ${CMAKE_SOURCE_DIR}/src/Transform.cpp
 )
 
 # 设置主项目的编译选项（解决中文输出乱码问题）

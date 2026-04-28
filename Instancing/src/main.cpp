@@ -1,8 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <filesystem>
-#include <vector>
 #include <string>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
@@ -13,9 +11,7 @@
 #include "Shader.h"
 #include "Model.h"
 #include "Camera.h"
-#include "Transform.h"
 
-namespace fs = std::filesystem;
 
 CMRC_DECLARE(shaders);
 
@@ -79,13 +75,20 @@ int main()
 
     // 从 cmrc 资源加载着色器
     auto fs = cmrc::shaders::get_filesystem();
-    auto vertShaderFile = fs.open("resource/glsl/vertexShader.glsl");
-    auto fragShaderFile = fs.open("resource/glsl/fragmentShader.glsl");
-    Shader shader(
-        vertShaderFile.begin(), vertShaderFile.size(),
-        fragShaderFile.begin(), fragShaderFile.size()
+    auto planetVsFile = fs.open("resource/glsl/planet.vs");
+    auto planetFsFile = fs.open("resource/glsl/planet.fs");
+    Shader planetShader(
+        planetVsFile.begin(), planetVsFile.size(),
+        planetFsFile.begin(), planetFsFile.size()
     );
-    
+
+    auto rockVsFile = fs.open("resource/glsl/rock.vs");
+    auto rockFsFile = fs.open("resource/glsl/rock.fs");
+    Shader rockShader(
+        rockVsFile.begin(), rockVsFile.size(),
+        rockFsFile.begin(), rockFsFile.size()
+    );
+
     Model rock("resource/models/rock/rock.obj");
     Model planet("resource/models/planet/planet.obj");
     unsigned int amount = 10000;
@@ -126,7 +129,7 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_MULTISAMPLE);
-        shader.use();
+        planetShader.use();
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::mat4(1.0f);
@@ -134,22 +137,27 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 10000.0f);
         camera.setProjectionMatrix(projection);
 
-        shader.setMat4("model", model);
-        shader.setMat4("invModel", glm::inverse(model));
-        shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
+        planetShader.setMat4("model", model);
+        planetShader.setMat4("invModel", glm::inverse(model));
+        planetShader.setMat4("view", view);
+        planetShader.setMat4("projection", projection);
 
         // 设置光照参数
         glm::vec3 lightPos(2.0f, 2.0f, 20.0f);
-        shader.setVec3("lightPos", lightPos);
-        shader.setVec3("viewPos", camera.getPosition());
-
-        planet.draw(shader);
+        planetShader.setVec3("lightPos", lightPos);
+        planetShader.setVec3("viewPos", camera.getPosition());
+        rockShader.setMat4("view", view);
+        rockShader.setMat4("projection", projection);
+        rockShader.setVec3("lightPos", lightPos);
+        rockShader.setVec3("viewPos", camera.getPosition());
+        
+        planet.draw(planetShader);
         // 绘制多个实例
         for (unsigned int i = 0; i < amount; i++) {
-            shader.setMat4("model", modelMatrices[i]);
-            shader.setMat4("invModel", glm::inverse(modelMatrices[i]));
-            rock.draw(shader);
+
+            rockShader.setMat4("model", modelMatrices[i]);
+            rockShader.setMat4("invModel", glm::inverse(modelMatrices[i]));
+            rock.draw(rockShader);
         }
 
         glfwSwapBuffers(window);
