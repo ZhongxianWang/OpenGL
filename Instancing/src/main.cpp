@@ -188,7 +188,8 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMat();
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 10000.0f);
+        float aspect = window_height == 0 ? 1.0f : (float)window_width / (float)window_height;
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10000.0f);
         camera.setProjectionMatrix(projection);
 
         // 设置光照参数
