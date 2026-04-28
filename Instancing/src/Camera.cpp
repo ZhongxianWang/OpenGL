@@ -100,8 +100,7 @@ void Camera::handleMouseMove(GLFWwindow* window, double xpos, double ypos)
         glm::vec3 lastSpherePos = screenToSphere(m_lastMouseX, m_lastMouseY, width, height);
 
         // 计算旋转轴（垂直于两个向量的叉积）
-        glm::vec3 rotationAxis = glm::cross(lastSpherePos, currentSpherePos);
-
+        glm::vec3 rotationAxis = glm::cross(currentSpherePos, lastSpherePos);
         // 计算旋转角度（基于两个向量的点积）
         float dotProduct = glm::dot(glm::normalize(lastSpherePos), glm::normalize(currentSpherePos));
         float rotationAngle = std::acos(glm::clamp(dotProduct, -1.0f, 1.0f));

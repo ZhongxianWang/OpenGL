@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
+#include <vector>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 #include <glm/glm.hpp>
@@ -92,13 +93,15 @@ int main()
     Model rock("resource/models/rock/rock.obj");
     Model planet("resource/models/planet/planet.obj");
     unsigned int amount = 10000;
-    glm::mat4 *modelMatrices;
-    modelMatrices = new glm::mat4[amount];
+    std::vector<glm::mat4> modelMatrices;
+    std::vector<glm::mat4> invModelMatrices;
+    modelMatrices.reserve(amount);
+    invModelMatrices.reserve(amount);
+
     srand(glfwGetTime()); // 初始化随机种子    
     float radius = 50.0;
     float offset = 2.5f;
-    for(unsigned int i = 0; i < amount; i++)
-    {
+    for(unsigned int i = 0; i < amount; i++) {
         glm::mat4 model(1.0f);
         // 1. 位移：分布在半径为 'radius' 的圆形上，偏移的范围是 [-offset, offset]
         float angle = (float)i / (float)amount * 360.0f;
@@ -119,7 +122,58 @@ int main()
         model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
 
         // 4. 添加到矩阵的数组中
-        modelMatrices[i] = model;
+        modelMatrices.emplace_back(model);
+        invModelMatrices.emplace_back(glm::inverse(model));
+    }
+
+    unsigned int modelVBO;
+    glGenBuffers(1, &modelVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
+    unsigned int invModelVBO;
+    glGenBuffers(1, &invModelVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, invModelVBO);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &invModelMatrices[0], GL_STATIC_DRAW);
+
+    for(unsigned int i = 0; i < rock.meshes().size(); i++)
+    {
+        unsigned int VAO = rock.meshes().at(i).vertexArrayObjectId();
+        glBindVertexArray(VAO);
+        GLsizei vec4Size = sizeof(glm::vec4);
+        
+        // 绑定 modelVBO 并设置 location 3-6
+        glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
+        glEnableVertexAttribArray(3); 
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+        glEnableVertexAttribArray(4); 
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+        glEnableVertexAttribArray(5); 
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+        glEnableVertexAttribArray(6); 
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+        // 绑定 invModelVBO 并设置 location 7-10
+        glBindBuffer(GL_ARRAY_BUFFER, invModelVBO);
+        glEnableVertexAttribArray(7); 
+        glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+        glEnableVertexAttribArray(8); 
+        glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+        glEnableVertexAttribArray(9); 
+        glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+        glEnableVertexAttribArray(10); 
+        glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+        glVertexAttribDivisor(6, 1);
+        glVertexAttribDivisor(7, 1);
+        glVertexAttribDivisor(8, 1);
+        glVertexAttribDivisor(9, 1);
+        glVertexAttribDivisor(10, 1);
+
+        glBindVertexArray(0);
     }
 
     while (!glfwWindowShouldClose(window))
@@ -137,29 +191,26 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 10000.0f);
         camera.setProjectionMatrix(projection);
 
+        // 设置光照参数
+        glm::vec3 lightPos(2.0f, 2.0f, 20.0f);
+
+        // 绘制行星
+        planetShader.use();
         planetShader.setMat4("model", model);
         planetShader.setMat4("invModel", glm::inverse(model));
         planetShader.setMat4("view", view);
         planetShader.setMat4("projection", projection);
-
-        // 设置光照参数
-        glm::vec3 lightPos(2.0f, 2.0f, 20.0f);
         planetShader.setVec3("lightPos", lightPos);
         planetShader.setVec3("viewPos", camera.getPosition());
+        planet.draw(planetShader);
+
+        // 绘制岩石实例
+        rockShader.use();
         rockShader.setMat4("view", view);
         rockShader.setMat4("projection", projection);
         rockShader.setVec3("lightPos", lightPos);
         rockShader.setVec3("viewPos", camera.getPosition());
-        
-        planet.draw(planetShader);
-        // 绘制多个实例
-        for (unsigned int i = 0; i < amount; i++) {
-
-            rockShader.setMat4("model", modelMatrices[i]);
-            rockShader.setMat4("invModel", glm::inverse(modelMatrices[i]));
-            rock.draw(rockShader);
-        }
-
+        rock.drawInstanced(rockShader, amount);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

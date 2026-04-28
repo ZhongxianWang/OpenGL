@@ -15,6 +15,9 @@ public:
 	Model(const std::string& path);
 	~Model();
     void draw(Shader& shader);
+    void drawInstanced(Shader& shader, unsigned int instanceCount);
+    void seInstacedModelMatrices(const std::vector<glm::mat4>& modelMatrices);
+    std::vector<Mesh> meshes() { return m_meshes; }
 
 private:
     void loadModel(const std::string& path);

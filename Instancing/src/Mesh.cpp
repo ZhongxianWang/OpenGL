@@ -1,6 +1,5 @@
 #include "Mesh.h"
 #include <glad/glad.h> 
-#include <iostream>
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material)
 {
@@ -50,6 +49,41 @@ void Mesh::draw(Shader& shader)
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+}
+
+void Mesh::drawInstanced(Shader& shader, unsigned int instanceCount) {
+    // 绑定纹理
+    unsigned int diffuseNr  = 0;
+    unsigned int specularNr = 0;
+    unsigned int normalNr   = 0;
+    unsigned int heightNr   = 0;
+    for(unsigned int i = 0; i < m_textures.size(); i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        std::string name = m_textures[i].type;
+        std::string uniformName;
+        
+        if(name == "texture_diffuse") {
+            uniformName = "texture_diffuse[" + std::to_string(diffuseNr++) + "]";
+        } else if(name == "texture_specular") {
+            uniformName = "texture_specular[" + std::to_string(specularNr++) + "]";
+        } else if(name == "texture_normal") {
+            uniformName = "texture_normal[" + std::to_string(normalNr++) + "]";
+        } else if(name == "texture_height") {
+            uniformName = "texture_height[" + std::to_string(heightNr++) + "]";
+        }
+
+        shader.setInt(uniformName, i);
+        glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+    }
+    
+    shader.setVec3("ambient", m_material.ambient);
+    shader.setVec3("diffuse", m_material.diffuse);
+    shader.setVec3("specular", m_material.specular);
+    shader.setFloat("shininess", m_material.shininess);
+
+    // 绘制
+    glBindVertexArray(m_VAO);
+    glDrawElementsInstanced(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0, instanceCount);
 }
 
 void Mesh::setupMesh()

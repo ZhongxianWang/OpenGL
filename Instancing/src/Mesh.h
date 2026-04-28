@@ -30,6 +30,8 @@ public:
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material);
     ~Mesh();
     void draw(Shader& shader);
+    void drawInstanced(Shader& shader, unsigned int instanceCount);
+    unsigned int vertexArrayObjectId() { return m_VAO; }
 
 private:
     void setupMesh();

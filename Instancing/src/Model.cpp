@@ -26,6 +26,12 @@ void Model::draw(Shader& shader)
     }
 }
 
+void Model::drawInstanced(Shader& shader, unsigned int instanceCount) {
+    for (auto& mesh : m_meshes) {
+        mesh.drawInstanced(shader, instanceCount);
+    }
+}
+
 void Model::loadModel(const std::string& path)
 {
     Assimp::Importer importer;
@@ -40,6 +46,64 @@ void Model::loadModel(const std::string& path)
         return;
     }
     processNode(scene->mRootNode, scene);
+}
+
+void Model::seInstacedModelMatrices(const std::vector<glm::mat4>& modelMatrices) {
+    unsigned int modelVBO;
+    glGenBuffers(1, &modelVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
+    glBufferData(GL_ARRAY_BUFFER, modelMatrices.size() * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
+    std::vector<glm::mat4> invModelMatrices;
+    invModelMatrices.reserve(modelMatrices.size());
+     for(auto model :modelMatrices ) {
+        invModelMatrices.emplace_back(glm::inverse(model));
+    }
+
+    unsigned int invModelVBO;
+    glGenBuffers(1, &invModelVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, invModelVBO);
+    glBufferData(GL_ARRAY_BUFFER, modelMatrices.size() * sizeof(glm::mat4), &invModelMatrices[0], GL_STATIC_DRAW);
+
+    for(unsigned int i = 0; i < m_meshes.size(); i++)
+    {
+        unsigned int VAO = m_meshes.at(i).vertexArrayObjectId();
+        glBindVertexArray(VAO);
+        GLsizei vec4Size = sizeof(glm::vec4);
+        
+        // 绑定 modelVBO 并设置 location 3-6
+        glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
+        glEnableVertexAttribArray(3); 
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+        glEnableVertexAttribArray(4); 
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+        glEnableVertexAttribArray(5); 
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+        glEnableVertexAttribArray(6); 
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+        // 绑定 invModelVBO 并设置 location 7-10
+        glBindBuffer(GL_ARRAY_BUFFER, invModelVBO);
+        glEnableVertexAttribArray(7); 
+        glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+        glEnableVertexAttribArray(8); 
+        glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+        glEnableVertexAttribArray(9); 
+        glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+        glEnableVertexAttribArray(10); 
+        glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+        glVertexAttribDivisor(6, 1);
+        glVertexAttribDivisor(7, 1);
+        glVertexAttribDivisor(8, 1);
+        glVertexAttribDivisor(9, 1);
+        glVertexAttribDivisor(10, 1);
+
+        glBindVertexArray(0);
+    }
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene)
@@ -160,7 +224,7 @@ Material Model::loadMaterial(aiMaterial* material) {
 
 unsigned int Model::loadTextureFromFile(const std::string& path)
 {
-    stbi_set_flip_vertically_on_load(true);
+    //stbi_set_flip_vertically_on_load(true);
     // 检查缓存中是否已有此纹理
     auto it = m_textureCache.find(path);
     if (it != m_textureCache.end()) {
