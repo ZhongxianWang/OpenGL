@@ -8,6 +8,7 @@
 #include <assimp/postprocess.h>
 #include <glad/glad.h>
 #include "stb_image/stb_image.h"
+
 namespace fs = std::filesystem;
 Model::Model(const std::string& path)
     : m_modelPath(path)

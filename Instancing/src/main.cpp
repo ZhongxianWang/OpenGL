@@ -1,3 +1,4 @@
+#include "glm/matrix.hpp"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -27,7 +28,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 int window_width = SCR_WIDTH;
 int window_height = SCR_HEIGHT;
-
+#define _USE_INSTANCED_RENDERING
 int main()
 {
     // glfw: initialize and configure
@@ -82,21 +83,26 @@ int main()
         planetVsFile.begin(), planetVsFile.size(),
         planetFsFile.begin(), planetFsFile.size()
     );
-
+#ifdef _USE_INSTANCED_RENDERING
+    auto rockVsFile = fs.open("resource/glsl/rock_instanced.vs");
+    auto rockFsFile = fs.open("resource/glsl/rock_instanced.fs");
+    Shader rockShader(
+        rockVsFile.begin(), rockVsFile.size(),
+        rockFsFile.begin(), rockFsFile.size()
+    );
+#else
     auto rockVsFile = fs.open("resource/glsl/rock.vs");
     auto rockFsFile = fs.open("resource/glsl/rock.fs");
     Shader rockShader(
         rockVsFile.begin(), rockVsFile.size(),
         rockFsFile.begin(), rockFsFile.size()
     );
-
+#endif
     Model rock("resource/models/rock/rock.obj");
     Model planet("resource/models/planet/planet.obj");
     unsigned int amount = 10000;
     std::vector<glm::mat4> modelMatrices;
-    std::vector<glm::mat4> invModelMatrices;
     modelMatrices.reserve(amount);
-    invModelMatrices.reserve(amount);
 
     srand(glfwGetTime()); // 初始化随机种子    
     float radius = 50.0;
@@ -123,59 +129,10 @@ int main()
 
         // 4. 添加到矩阵的数组中
         modelMatrices.emplace_back(model);
-        invModelMatrices.emplace_back(glm::inverse(model));
     }
-
-    unsigned int modelVBO;
-    glGenBuffers(1, &modelVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
-    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-
-    unsigned int invModelVBO;
-    glGenBuffers(1, &invModelVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, invModelVBO);
-    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &invModelMatrices[0], GL_STATIC_DRAW);
-
-    for(unsigned int i = 0; i < rock.meshes().size(); i++)
-    {
-        unsigned int VAO = rock.meshes().at(i).vertexArrayObjectId();
-        glBindVertexArray(VAO);
-        GLsizei vec4Size = sizeof(glm::vec4);
-        
-        // 绑定 modelVBO 并设置 location 3-6
-        glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
-        glEnableVertexAttribArray(3); 
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-        glEnableVertexAttribArray(4); 
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
-        glEnableVertexAttribArray(5); 
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
-        glEnableVertexAttribArray(6); 
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-
-        // 绑定 invModelVBO 并设置 location 7-10
-        glBindBuffer(GL_ARRAY_BUFFER, invModelVBO);
-        glEnableVertexAttribArray(7); 
-        glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-        glEnableVertexAttribArray(8); 
-        glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
-        glEnableVertexAttribArray(9); 
-        glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
-        glEnableVertexAttribArray(10); 
-        glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-
-        glVertexAttribDivisor(3, 1);
-        glVertexAttribDivisor(4, 1);
-        glVertexAttribDivisor(5, 1);
-        glVertexAttribDivisor(6, 1);
-        glVertexAttribDivisor(7, 1);
-        glVertexAttribDivisor(8, 1);
-        glVertexAttribDivisor(9, 1);
-        glVertexAttribDivisor(10, 1);
-
-        glBindVertexArray(0);
-    }
-
+#ifdef _USE_INSTANCED_RENDERING
+    rock.seInstacedModelMatrices(modelMatrices);
+#endif
     while (!glfwWindowShouldClose(window))
     {
         processInput(window, &camera);
@@ -207,11 +164,23 @@ int main()
 
         // 绘制岩石实例
         rockShader.use();
+#ifdef _USE_INSTANCED_RENDERING
         rockShader.setMat4("view", view);
         rockShader.setMat4("projection", projection);
         rockShader.setVec3("lightPos", lightPos);
         rockShader.setVec3("viewPos", camera.getPosition());
         rock.drawInstanced(rockShader, amount);
+#else
+        rockShader.setMat4("view", view);
+        rockShader.setMat4("projection", projection);
+        rockShader.setVec3("lightPos", lightPos);
+        rockShader.setVec3("viewPos", camera.getPosition());
+        for (int i = 0; i < amount; i++) {
+            rockShader.setMat4("model", modelMatrices.at(i));
+            rockShader.setMat4("invModel", glm::inverse(modelMatrices.at(i)));
+            rock.draw(rockShader);
+        }
+#endif
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

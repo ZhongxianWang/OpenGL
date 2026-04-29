@@ -37,6 +37,8 @@ cmrc_add_resource_library(shaders
     ${CMAKE_SOURCE_DIR}/resource/glsl/planet.fs
     ${CMAKE_SOURCE_DIR}/resource/glsl/rock.vs
     ${CMAKE_SOURCE_DIR}/resource/glsl/rock.fs
+    ${CMAKE_SOURCE_DIR}/resource/glsl/rock_instanced.fs
+    ${CMAKE_SOURCE_DIR}/resource/glsl/rock_instanced.vs
 )
 
 add_executable(${PROJECT_NAME}
