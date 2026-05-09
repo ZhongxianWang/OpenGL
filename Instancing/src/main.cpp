@@ -14,7 +14,6 @@
 #include "Model.h"
 #include "Camera.h"
 
-
 CMRC_DECLARE(shaders);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -29,6 +28,26 @@ const unsigned int SCR_HEIGHT = 800;
 int window_width = SCR_WIDTH;
 int window_height = SCR_HEIGHT;
 #define _USE_INSTANCED_RENDERING
+
+void updateFPSTitle(GLFWwindow* window) {
+    static double lastTime = glfwGetTime();
+    static int frameCount = 0;
+    
+    double currentTime = glfwGetTime();
+    frameCount++;
+    
+    if (currentTime - lastTime >= 1.0) {
+        double fps = frameCount / (currentTime - lastTime);
+        
+        char title[256];
+        snprintf(title, sizeof(title), "OpenGL Window - FPS: %.2f", fps);
+        glfwSetWindowTitle(window, title);
+        
+        frameCount = 0;
+        lastTime = currentTime;
+    }
+}
+
 int main()
 {
     // glfw: initialize and configure
@@ -131,10 +150,11 @@ int main()
         modelMatrices.emplace_back(model);
     }
 #ifdef _USE_INSTANCED_RENDERING
-    rock.seInstacedModelMatrices(modelMatrices);
+    rock.setInstacedModelMatrices(modelMatrices);
 #endif
     while (!glfwWindowShouldClose(window))
     {
+        updateFPSTitle(window);
         processInput(window, &camera);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -266,5 +286,3 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     window_width = width;
     window_height = height;
 }
-
-

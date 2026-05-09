@@ -49,7 +49,7 @@ void Model::loadModel(const std::string& path)
     processNode(scene->mRootNode, scene);
 }
 
-void Model::seInstacedModelMatrices(const std::vector<glm::mat4>& modelMatrices) {
+void Model::setInstacedModelMatrices(const std::vector<glm::mat4>& modelMatrices) {
     unsigned int modelVBO;
     glGenBuffers(1, &modelVBO);
     glBindBuffer(GL_ARRAY_BUFFER, modelVBO);

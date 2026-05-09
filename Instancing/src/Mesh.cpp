@@ -47,7 +47,7 @@ void Mesh::draw(Shader& shader)
 
     // 绘制
     glBindVertexArray(m_VAO);
-    glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 
@@ -84,6 +84,7 @@ void Mesh::drawInstanced(Shader& shader, unsigned int instanceCount) {
     // 绘制
     glBindVertexArray(m_VAO);
     glDrawElementsInstanced(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0, instanceCount);
+    glBindVertexArray(0);
 }
 
 void Mesh::setupMesh()
