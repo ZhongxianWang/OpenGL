@@ -93,6 +93,7 @@ void Camera::handleMouseMove(GLFWwindow* window, double xpos, double ypos)
 
         m_position -= worldDelta;
         m_center -= worldDelta;
+        updateViewMatrix();
 
     } else if (m_rightMousePressed) {
         // 将鼠标坐标映射到球体表面
