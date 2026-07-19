@@ -4,7 +4,7 @@ in vec3 Normal;
 in vec3 FragPos;
 
 uniform sampler2D texture_diffuse[16];
-uniform sampler2D texture_speculare[16];
+uniform sampler2D texture_specular[16];
 
 uniform vec3 ambient;
 uniform vec3 diffuse;
@@ -18,7 +18,7 @@ out vec4 FragColor;
 void main()
 {
     vec3 diffTexColor = texture(texture_diffuse[0], TexCoord).rgb;
-    vec3 specTexColor = texture(texture_speculare[0], TexCoord).rgb;
+    vec3 specTexColor = texture(texture_specular[0], TexCoord).rgb;
 
     // 环境光：使用材质 ambient 系数
     vec3 ambientColor = ambient * diffTexColor;
